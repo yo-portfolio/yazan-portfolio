@@ -1,0 +1,6 @@
+{
+  "rulesFile": "db.rules.json",
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
