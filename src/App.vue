@@ -1,12 +1,13 @@
 <template>
   <div id="app">
-    <div id="nav">
+    <!-- <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link>
-    </div>
-    <div class="hidden hidden-ball scale-title">
+    </div> -->
+        <router-view/>
+    <div class="hidden hidden-ball scale-title" style="display: none !important;">
 
-    <main>		
+    <main >		
           <!-- Preloader -->
           <div class="preloader-wrap">
               <div class="outer">
