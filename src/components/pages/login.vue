@@ -35,7 +35,7 @@
                 e.preventDefault();
                 firebase.auth().signInWithEmailAndPassword(this.email, this.password).then(res =>{
                     console.log(res);
-                })
+                });
             }
         }
     };
