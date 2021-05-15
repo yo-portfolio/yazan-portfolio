@@ -20,6 +20,16 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('../components/pages/dashboard.vue')
+  },
+  {
+    path: '/project',
+    name: 'project-create',
+    component: () => import('../components/pages/project-form.vue')
+  },
+  {
+    path: '/project/:id',
+    name: 'project-update',
+    component: () => import('../components/pages/project-form.vue')
   }
 ]
 

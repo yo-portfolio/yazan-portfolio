@@ -3,113 +3,84 @@
         <div class="w-full">
             <div class="flex p-3 justify-between">
                 <h2 class="text-left font-bold">Projects</h2>
-                <div class="font-bold hover:underline my-auto text-blue-400 cursor-pointer" @click="display = true"><i class="pi pi-plus mr-1"></i>add Project</div>
+                <router-link class="font-bold hover:underline my-auto text-blue-400 cursor-pointer" to="/project"><i class="pi pi-plus mr-1"></i>add Project</router-link>
             </div>
             
-            <draggable v-model="projects" group="people" @start="drag=true" @end="drag=false" class="flex w-full p-3">
-                <div v-for="element in projects" :key="element.id" class="bg-gray-200 rounded flex-1 mr-2 cursor-grab">{{element.name}}</div>
+            <draggable v-model="projects" group="people"  @end="changeOrder" class="flex w-full p-3">
+                <div v-for="project in projects" :key="project.name" class="bg-gray-200 rounded flex-1 mr-2 cursor-grab text-left p-3">
+                    <div class="flex flex-wrap w-full justify-between">
+                        <p class="font-bold mb-3 text-2xl text-black flex-1">{{project.name}}</p>
+                        <div class="actions">
+                            <p class="inline-block cursor-pointer mr-2" @click="editProject(project.id)"><i class="pi pi-pencil text-blue-500"></i> Edit</p>
+                            <p class="inline-block cursor-pointer"  @click="deleteProject(project.id)"><i class="pi pi-times text-red-500"></i> Delete</p>
+                        </div>
+                        <div class="w-full m-auto">
+                            <img  :src="project.background" class="max-h-32" :alt="project.name">
+                        </div>
+                    </div>
+                    
+                    
+                </div>
             </draggable>
         </div>
-        <Dialog class="w-2/3 m-auto" header="Add Project" :visible.sync="display" >
-            <div class="form text-left flex flex-wrap">
-                <div class="field py-2 w-full">
-                    <label class="block font-bold mb-1" for="name">Name</label>
-                    <InputText class="w-full" id="name" type="text" v-model="projectForm.name" />
-                </div>
-                 <div class="field py-2 w-full">
-                    <label class="block font-bold mb-1" for="description">Discription</label>
-                    <Textarea class="w-full" id="description" v-model="projectForm.discription" rows="5" cols="30" :autoResize="true" />
-                </div>
-                 <div class="field py-2 w-1/3 flex">
-                    <Checkbox class="inline-block" id="web" v-model="projectForm.hasWeb" :binary="true" />
-                    <label class="font-bold ml-2" for="web">Web</label>
-                </div>
-                <div class="field py-2 w-1/3 flex">
-                    <Checkbox class="inline-block"  id="mobile" v-model="projectForm.hasMob" :binary="true" />
-                    <label class="font-bold ml-2" for="mobile">Mobile</label>
-                </div>
-                <div class="field py-2 w-1/3 flex">
-                    <Checkbox class="inline-block"  id="branding" v-model="projectForm.hasBranding" :binary="true" />
-                    <label class="font-bold ml-2" for="branding">Branding</label>
-                </div>
-                <div class="field py-2 w-full">
-                    <label class="block font-bold mb-5" for="description">Media</label>
-                    <FileUpload class="inline-block" ref="file"  mode="basic" name="file"  :customUpload="true" @select="projectFormUpload" />
-                    <p class="text-blue-900 inline-block ml-5 cursor-pointer" @click="clearFile" v-if="!!projectForm.media"><i class="pi pi-times"></i> Remove File</p>
-                    <img :src="projectForm.media" v-if="projectForm.media">
-                </div>
-                <div class="w-full text-right">
-                    <Button placeholder="Add Project" />
-                </div>
-            </div>
-        </Dialog>
     </div>
 </template>
 
 <script>
   import draggable from 'vuedraggable';
-  import Dialog from 'primevue/dialog'; 
-  import InputText from 'primevue/inputtext';
-  import Textarea from 'primevue/textarea';
-  import Checkbox from 'primevue/checkbox';
-  import FileUpload from 'primevue/fileupload';
-  import Button from 'primevue/button';
 
-
-
-  import db from '../../firebaseDb';
-
+  import firebase from '../../firebaseDb';
     export default {
         components: {
             draggable,
-            Dialog,
-            InputText,
-            Textarea,
-            Checkbox,
-            FileUpload,
-            Button
-        },
-        async created(){
-            this.resetProjectForm();
-           db.collection('projects').doc('MAIN').get().then(res =>{
-            //   this.projects = res.data();
-            if (res.exists) {
-                this.projects = res.data();
-            } else {
-                this.projects = [];
-            }
-          });
         },
         data(){
             return {
-                display: false,
-                projects: null,
-                projectForm: {}
+                projects : []
             };
         },
-        methods: {
-            addProject (){
-               db.collection('projects').doc('MAIN').set(this.projects);
+         created(){
+           firebase.db.collection('projects').get().then(res =>{
+            //   this.projects = res.data();
+                const unorderedProjects = [];
+
+            res.forEach(item =>{
+            if (item.exists) {
+                unorderedProjects.push(item.data());
+            } 
+            });
+            firebase.db.collection('order').doc('main').get().then(order => {
+                let orderObj = [];
+                if (order.exists) {
+                     orderObj = order.data().order;
+                }
+                for (let i = 0; i < orderObj.length; i++) {
+                    const elem = orderObj[i];
+                    for (let x = 0; x < unorderedProjects.length; x++) {
+                        const item = unorderedProjects[x];
+                        if (item.id === elem) {
+                            this.projects.push (item);
+                        }
+                    }
+                }
+            });
+          });
+        },
+        methods:{
+            changeOrder(){
+                firebase.db.collection('order').doc('main').set({order: this.projects.map(item => item.id)})
             },
-            projectFormUpload(event){
-                this.projectForm.media = event.files[0];
-                console.log(this.projectForm.media);
+            editProject(id){
+                this.$router.push('/project/'+id);
             },
-            clearFile(){
-                this.projectForm.media = null; 
-                this.$refs.file.clear();
+            deleteProject(id){
+                firebase.db.collection('projects').doc(id).delete().then(()=>{
+                    this.projects = this.projects.filter(item => item.id !== id);
+                    this.changeOrder();
+                });
             },
-            resetProjectForm(){
-                this.projectForm = {
-                    'name': '',
-                    'discription':'',
-                    'hasWeb': false,
-                    'hasMob': false,
-                    'hasBranding': false,
-                    'media': null
-                };
-            }
         }
+       
     }
 </script>
 
