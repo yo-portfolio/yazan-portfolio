@@ -33,7 +33,7 @@
             <img class="max-h-48" :src="projectForm.logo" v-if="projectForm.logo">
         </div>
         <div class="flex flex-wrap w-full">
-            <p class="w-full text-right cursor-pointer mb-10" @click="addComponent"><i class="pi pi-plus"></i> Add Component</p>
+            <p class="w-full text-right mb-10"><span class="cursor-pointer"  @click="addComponent"><i class="pi pi-plus"></i> Add Component</span></p>
             <div class="field w-1/3" v-for="(item, index) in projectForm.detials" :key="index">
                 <p class="font-bold text-center">Component #{{index + 1}}</p>
                 <div class="border border-solid m-3 p-2">
@@ -69,11 +69,30 @@
                             <Textarea class="w-full" v-model="item.data.text2" rows="5" cols="30" :autoResize="true" />
                         </div>
                     </div>
+                    <div v-if="item.type && ['heading_sub', 'quote','heading'].indexOf(item.type.value) !== -1">
+                        <div class="flex mb-3">
+                            <label class="mr-10">{{item.type.value === 'quote' ?'Quote':'Heading'}}</label>
+                            <InputText class="w-full" v-model="item.data.text1" />
+                            
+                            <!-- <Dropdown  :options="emojis" placeholder="Select a emoji"  v-if="item.type.value !== 'quote' ">
+                                <template #option="slotProps">
+                                    <div>
+                                        <img :alt="slotProps.option" width="30px" :src="slotProps.option" />
+                                    </div>
+                                </template>
+                            </Dropdown> -->
+                        </div>
+                        <div class="flex mb-3" v-if="item.type.value === 'heading_sub'">
+                            <label class="mr-10">Sub Heading</label>
+                            <InputText class="w-full" v-model="item.data.text1" />
+                        </div>
+                    </div>
                     
                 </div>
                 
             </div>
         </div>
+        
         <div class="w-full text-right">
             <Button :label="editMode? 'Update Project' :'Add Project'" @click="addProject" />
         </div>
@@ -89,6 +108,7 @@
   import FileUpload from 'primevue/fileupload';
   import Dropdown from 'primevue/dropdown';
   import Button from 'primevue/button';
+  import emojis from '../emoji-array';
   import { v4 as uuidv4 } from 'uuid';
 
     export default {
@@ -106,6 +126,7 @@
                 projects: null,
                 projectForm: {},
                 editMode: !!this.$route.params.id,
+                emojis: [],
                 componentTypes:[
                     {
                         name: 'Image Right',
@@ -140,6 +161,7 @@
         },
         created(){
             this.resetProjectForm();
+            this.getEmojis();
             this.id = this.editMode ? this.$route.params.id: uuidv4();
             if (this.editMode) {
                 firebase.db.collection('projects').doc(this.id).get().then((res)=>{
@@ -187,6 +209,15 @@
 
                 }                
             },
+            getEmojis(){
+                for (let i = 1; i < 10; i++) {
+                    firebase.storage.child(`memoji/emoji-${i}.svg`).getDownloadURL().then(res=>{
+                        this.emojis.push(res);
+                    });
+                }
+                
+            },
+
             uploadImage(type, file){
                 const meta = {
                     contentType:file.type
